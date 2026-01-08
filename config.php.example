@@ -4,29 +4,23 @@
  *
  * Copy this file to config.php and update with your credentials
  * DO NOT commit config.php to version control
- *
- * For production, use environment variables for required credentials:
- * - NIMBBL_ACCESS_KEY (required)
- * - NIMBBL_ACCESS_SECRET (required)
- *
- * Optional values can be edited directly in this file.
  */
 
 return [
-    // API credentials - use environment vars in production
-    'access_key' => getenv('NIMBBL_ACCESS_KEY') ?: 'YOUR_NIMBBL_ACCESS_KEY',
-    'access_secret' => getenv('NIMBBL_ACCESS_SECRET') ?: 'YOUR_NIMBBL_ACCESS_SECRET',
+    // API credentials
+    'access_key' => 'YOUR_NIMBBL_ACCESS_KEY',
+    'access_secret' => 'YOUR_NIMBBL_ACCESS_SECRET',
 
     // Base URL + version
     // Prod: https://api.nimbbl.tech/api/
     // UAT:  https://apipp.nimbbl.tech/api/
     // QA2:  https://qa2api.nimbbl.tech/api/
-    'api_url' => getenv('NIMBBL_API_URL') ?: 'https://api.nimbbl.tech/api/',
+    'api_url' => 'https://api.nimbbl.tech/api/',
     'api_version' => 'v3',
 
     // Logging (optional)
     'enable_logging' => true,
-    'log_file' => getenv('NIMBBL_LOG_FILE') ?: 'php://stderr',
+    'log_file' => 'php://stderr',
     // Debug logging flag (controls Logger::enableDebugLogging/disableDebugLogging)
     'debug_logging' => false,
 ];
