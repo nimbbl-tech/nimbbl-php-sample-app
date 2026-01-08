@@ -1,0 +1,17 @@
+{
+  "name": "nimbbl/merchant-sample-app",
+  "type": "project",
+  "require": {
+    "php": ">=8.0",
+    "nimbbl/nimbbl-sdk": "dev-php_sdk_v3_api_signature_callback_webhook_encrypted_payloads"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/nimbbl-tech/nimbbl-php-sdk.git"
+    }
+  ]
+}
+

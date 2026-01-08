@@ -1,0 +1,29 @@
+# Environment variables
+.env
+
+# Configuration (contains sensitive credentials)
+config.php
+
+# Logs
+logs/
+*.log
+
+# Storage
+storage/webhook_seen.json
+storage/webhooks.log
+
+# Composer
+/vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+

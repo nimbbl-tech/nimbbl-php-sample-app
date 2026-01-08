@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+<g id="Ellipse 10456" filter="url(#filter0_d_1_13444)">
+<circle cx="9" cy="9" r="8" fill="#3f6f96"/>
+</g>
+<defs fill="#3f6f96">
+<filter id="filter0_d_1_13444" x="0.5" y="0.5" width="17" height="17" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB" fill="#3f6f96">
+<feFlood flood-opacity="0" result="BackgroundImageFix" fill="#3f6f96"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" fill="#3f6f96"/>
+<feOffset fill="#3f6f96"/>
+<feGaussianBlur stdDeviation="0.25" fill="#3f6f96"/>
+<feComposite in2="hardAlpha" operator="out" fill="#3f6f96"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0" fill="#3f6f96"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_13444" fill="#3f6f96"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_13444" result="shape" fill="#3f6f96"/>
+</filter>
+<linearGradient id="paint0_linear_1_13444" x1="5" y1="1" x2="13.5" y2="15" gradientUnits="userSpaceOnUse" fill="#3f6f96">
+<stop stop-color="#3f6f96" fill="#3f6f96"/>
+<stop offset="1" stop-color="#3f6f96" fill="#3f6f96"/>
+</linearGradient>
+</defs>
+</svg>

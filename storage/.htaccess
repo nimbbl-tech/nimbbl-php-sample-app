@@ -1,0 +1,14 @@
+# Deny access to all files in storage directory
+# This prevents web access to log files and other sensitive data
+
+<FilesMatch ".*">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow .gitkeep file (if needed)
+<FilesMatch "^\.gitkeep$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
