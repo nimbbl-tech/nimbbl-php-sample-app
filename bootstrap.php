@@ -22,6 +22,14 @@ if (!file_exists($configPath)) {
 }
 $config = require $configPath;
 
+// Local wrapper: provide CheckoutClient within this repo so the sample app doesn't depend on extra packages
+if (!class_exists('\\Nimbbl\\ClientWrapper\\CheckoutClient')) {
+    $localCheckoutClient = __DIR__ . '/src/ClientWrapper/CheckoutClient.php';
+    if (file_exists($localCheckoutClient)) {
+        require_once $localCheckoutClient;
+    }
+}
+
 // Validate required credentials
 $accessKey = $config['access_key'] ?? '';
 $accessSecret = $config['access_secret'] ?? '';
