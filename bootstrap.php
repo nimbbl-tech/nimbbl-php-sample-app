@@ -32,14 +32,14 @@ if (!$accessKey || !$accessSecret) {
     );
 }
 
-// Determine logging sink: enable/disable via config flag
-$enableLogging = $config['enable_logging'] ?? true;
-if ($enableLogging) {
-    \Nimbbl\Api\Logger::enableLogging();
-} else {
-    \Nimbbl\Api\Logger::disableLogging();
-}
-$logFile = $enableLogging ? ($config['log_file'] ?? 'php://stderr') : 'php://memory';
+// Logging
+// NOTE: The SDK Logger in nimbbl/nimbbl-sdk writes to a file path (it mkdir's dirname()).
+// So avoid stream targets like php://stderr; use a real file path (or /dev/null to disable).
+$enableLogging = (bool)($config['enable_logging'] ?? true);
+$defaultLogFile = __DIR__ . '/storage/nimbbl_debug.log';
+$logFile = $enableLogging
+    ? ($config['log_file'] ?? $defaultLogFile)
+    : '/dev/null';
 
 // Core API client for S2S (token/order/enquiry)
 $api = new \Nimbbl\Api\Api(
@@ -54,15 +54,5 @@ $api = new \Nimbbl\Api\Api(
 // Checkout launcher helper
 $checkoutLauncher = new \Nimbbl\ClientWrapper\CheckoutClient($config);
 
-// Debug logging: read only from config flag
-$debugFlagConfig = $config['debug_logging'] ?? null;
-$debugEnabled = $debugFlagConfig !== null
-    ? filter_var($debugFlagConfig, FILTER_VALIDATE_BOOLEAN)
-    : false;
-
-if ($debugEnabled) {
-    \Nimbbl\Api\Logger::enableDebugLogging();
-} else {
-    \Nimbbl\Api\Logger::disableDebugLogging();
-}
+// debug_logging is currently a no-op here; SDK logger doesn't expose enable/disable toggles.
 

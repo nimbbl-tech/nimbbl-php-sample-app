@@ -20,8 +20,10 @@ return [
 
     // Logging (optional)
     'enable_logging' => true,
-    'log_file' => 'php://stderr',
-    // Debug logging flag (controls Logger::enableDebugLogging/disableDebugLogging)
+    // Use a real file path (SDK logger will create the directory if missing).
+    // Set enable_logging=false to route logs to /dev/null (see bootstrap.php).
+    'log_file' => __DIR__ . '/storage/nimbbl_debug.log',
+    // Debug logging flag (currently unused in this sample app)
     'debug_logging' => false,
 ];
 
