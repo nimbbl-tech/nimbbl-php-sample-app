@@ -6,10 +6,10 @@
  */
 
 require __DIR__ . '/../bootstrap.php';
-use Nimbbl\Api\Encryption;
-use Nimbbl\Api\Util;
-use Nimbbl\Api\Logger;
-use Nimbbl\Api\SdkConstants;
+use Nimbbl\Api\Common\PayloadHelperUtils;
+use Nimbbl\Api\Common\JsonKeys;
+use Nimbbl\Api\Log\Logger;
+use Nimbbl\Api\Common\SdkConstants;
 
 // Initialize variables
 $orderId = '';
@@ -23,66 +23,59 @@ $userName = '';
 $reason = '';
 $parsedResponse = null;
 
-// Handle response parameter from popup mode (base64 encoded)
+// Handle response parameter from popup mode (base64 encoded or JSON)
 $responseParam = $_GET['response'] ?? '';
 if ($responseParam) {
-    try {
-        $decodedResponse = base64_decode($responseParam);
-        $parsedResponse = json_decode($decodedResponse, true);
-        
-        if ($parsedResponse) {
-            // Decrypt encrypted_response if present
-            if (isset($parsedResponse['encrypted_response'])) {
-                $enc = new Encryption($config['access_secret'] ?? '');
-                $decrypted = $enc->decrypt($parsedResponse['encrypted_response'], true);
-                $parsedResponse['payload'] = json_decode($decrypted, true);
-            }
-            
-            // Extract payment details from payload
-            $payload = $parsedResponse['payload'] ?? $parsedResponse;
-            $orderId = $payload['nimbbl_order_id'] ?? '';
-            $transactionId = $payload['nimbbl_transaction_id'] ?? $payload['transaction_id'] ?? '';
-            $message = $payload['message'] ?? 'Payment failed. Please try again.';
-            $status = $payload['status'] ?? 'failed';
-            $reason = $payload['reason'] ?? '';
-            
-            // Extract order details
-            $order = $payload['order'] ?? [];
-            $amount = $order['grand_total'] ?? null;
-            $currency = $order['currency'] ?? '';
-            
-            // Extract transaction details
-            $transaction = $payload['transaction'] ?? [];
-            $paymentMode = $transaction['payment_mode'] ?? '';
-            
-            // Extract user details
-            $user = $payload['user'] ?? [];
-            $userName = $user['name'] ?? '';
-        }
-    } catch (\Exception $e) {
-        Logger::getInstance()->log("Payment failed page error: " . $e->getMessage(), SdkConstants::LOG_ERROR, SdkConstants::COMPONENT_REQUEST);
-        // Fall back to URL parameters
-        $orderId = $_GET['order_id'] ?? '';
-        $transactionId = $_GET['transaction_id'] ?? '';
-        $message = $_GET['message'] ?? 'Payment failed. Please try again.';
-        $status = $_GET['status'] ?? 'failed';
-    }
-} else {
-    // Fall back to URL parameters (for redirect mode)
+  try {
+    $accessSecret = $config['access_secret'] ?? '';
+    // Use PayloadHelperUtils::parseResponse() to handle base64, JSON, encryption, and unwrapping
+    $parsedResponse = PayloadHelperUtils::parseResponse($responseParam, $accessSecret);
+
+    // Extract payment details - prioritize transaction.status
+    $status = $parsedResponse[JsonKeys::TRANSACTION][JsonKeys::STATUS] ?? $parsedResponse[JsonKeys::STATUS] ?? 'failed';
+    $orderId = $parsedResponse[JsonKeys::NIMBBL_ORDER_ID] ?? $parsedResponse[JsonKeys::ORDER_ID] ?? '';
+    // Extract transaction_id only from transaction object
+    $transactionId = $parsedResponse[JsonKeys::TRANSACTION][JsonKeys::TRANSACTION_ID] ?? null;
+    $message = $parsedResponse[JsonKeys::MESSAGE] ?? 'Payment failed. Please try again.';
+    $reason = $parsedResponse['reason'] ?? '';
+
+    // Extract order details
+    $order = $parsedResponse[JsonKeys::ORDER] ?? [];
+    $amount = $order['grand_total'] ?? null;
+    $currency = $order[JsonKeys::CURRENCY] ?? '';
+
+    // Extract transaction details
+    $transaction = $parsedResponse[JsonKeys::TRANSACTION] ?? [];
+    $paymentMode = $transaction['payment_mode'] ?? '';
+
+    // Extract user details
+    $user = $parsedResponse[JsonKeys::USER] ?? [];
+    $userName = $user['name'] ?? '';
+  } catch (\Exception $e) {
+    Logger::getInstance()->warning("Payment failed page error: " . $e->getMessage());
+    // Fall back to URL parameters
     $orderId = $_GET['order_id'] ?? '';
     $transactionId = $_GET['transaction_id'] ?? '';
     $message = $_GET['message'] ?? 'Payment failed. Please try again.';
     $status = $_GET['status'] ?? 'failed';
+  }
+} else {
+  // Fall back to URL parameters (for redirect mode)
+  $orderId = $_GET['order_id'] ?? '';
+  $transactionId = $_GET['transaction_id'] ?? '';
+  $message = $_GET['message'] ?? 'Payment failed. Please try again.';
+  $status = $_GET['status'] ?? 'failed';
 }
 
 // Format amount
 $formattedAmount = '';
 if ($amount !== null && $currency) {
-    $formattedAmount = number_format((float)$amount, 2, '.', ',');
+  $formattedAmount = number_format((float) $amount, 2, '.', ',');
 }
 ?>
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -91,25 +84,33 @@ if ($amount !== null && $currency) {
     @font-face {
       font-family: "Gordita";
       src: url("/assets/fonts/Gordita-Regular.otf") format("opentype"),
-           url("/assets/fonts/Gordita-Regular.ttf") format("truetype"),
-           url("/assets/fonts/Gordita-Regular.woff") format("woff"),
-           url("/assets/fonts/Gordita-Regular.woff2") format("woff2");
+        url("/assets/fonts/Gordita-Regular.ttf") format("truetype"),
+        url("/assets/fonts/Gordita-Regular.woff") format("woff"),
+        url("/assets/fonts/Gordita-Regular.woff2") format("woff2");
       font-display: swap;
     }
+
     @font-face {
       font-family: "Gordita-Bold";
       src: url("/assets/fonts/Gordita-Bold.otf") format("opentype"),
-           url("/assets/fonts/Gordita-Bold.ttf") format("truetype"),
-           url("/assets/fonts/Gordita-Bold.woff") format("woff");
+        url("/assets/fonts/Gordita-Bold.ttf") format("truetype"),
+        url("/assets/fonts/Gordita-Bold.woff") format("woff");
       font-display: swap;
     }
+
     @font-face {
       font-family: "Gordita-Medium";
       src: url("/assets/fonts/Gordita-Medium.otf") format("opentype"),
-           url("/assets/fonts/Gordita-Medium.woff") format("woff");
+        url("/assets/fonts/Gordita-Medium.woff") format("woff");
       font-display: swap;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: "Gordita", "Inter", -apple-system, sans-serif;
       background: #ECF0FD;
@@ -120,6 +121,7 @@ if ($amount !== null && $currency) {
       justify-content: center;
       padding: 20px;
     }
+
     .container {
       min-width: 300px;
       max-width: 500px;
@@ -129,6 +131,7 @@ if ($amount !== null && $currency) {
       align-items: center;
       justify-content: center;
     }
+
     .failed-header {
       width: 100%;
       display: flex;
@@ -141,47 +144,49 @@ if ($amount !== null && $currency) {
       background: #FFF0F0;
       color: #CB4949;
     }
+
     .failed-header img {
       width: 48px;
       height: 48px;
     }
+
     .failed-header h1 {
       font-family: "Gordita-Medium";
       font-size: 24px;
       text-align: center;
       margin: 0;
     }
+
     .failed-header .amount {
       font-size: 18px;
       margin-top: 4px;
     }
+
     .zigzag-box {
       text-align: center;
-      clip-path: polygon(
-        0% 0%,
-        100% 0%,
-        100% 95%,
-        95% 100%,
-        90% 95%,
-        85% 100%,
-        80% 95%,
-        75% 100%,
-        70% 95%,
-        65% 100%,
-        60% 95%,
-        55% 100%,
-        50% 95%,
-        45% 100%,
-        40% 95%,
-        35% 100%,
-        30% 95%,
-        25% 100%,
-        20% 95%,
-        15% 100%,
-        10% 95%,
-        5% 100%,
-        0% 95%
-      );
+      clip-path: polygon(0% 0%,
+          100% 0%,
+          100% 95%,
+          95% 100%,
+          90% 95%,
+          85% 100%,
+          80% 95%,
+          75% 100%,
+          70% 95%,
+          65% 100%,
+          60% 95%,
+          55% 100%,
+          50% 95%,
+          45% 100%,
+          40% 95%,
+          35% 100%,
+          30% 95%,
+          25% 100%,
+          20% 95%,
+          15% 100%,
+          10% 95%,
+          5% 100%,
+          0% 95%);
       background: white;
       padding: 16px 8px 40px;
       width: 100%;
@@ -190,6 +195,7 @@ if ($amount !== null && $currency) {
       align-items: center;
       justify-content: center;
     }
+
     .transaction-details {
       width: 100%;
       background: #FAFAFC;
@@ -198,12 +204,14 @@ if ($amount !== null && $currency) {
       padding: 16px;
       margin: 8px 8px 16px;
     }
+
     .transaction-details-title {
       font-family: "Gordita-Medium";
       font-size: 14px;
       margin-bottom: 8px;
       color: #101010;
     }
+
     .transaction-details-content {
       display: flex;
       flex-direction: column;
@@ -212,21 +220,25 @@ if ($amount !== null && $currency) {
       border-top: 1px solid #ECF0FD;
       font-size: 12px;
     }
+
     .detail-item {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: 4px;
     }
+
     .detail-label {
       color: #6C7F9A;
       font-size: 12px;
     }
+
     .detail-value {
       font-family: "Gordita-Medium";
       color: #101010;
       font-size: 12px;
     }
+
     .redirect-button {
       width: calc(100% - 16px);
       background: #000;
@@ -242,14 +254,17 @@ if ($amount !== null && $currency) {
       display: block;
       text-align: center;
     }
+
     .redirect-button:hover {
       background: #333;
     }
+
     .redirect-timer {
       font-family: "Gordita-Medium";
       font-size: 14px;
       color: #101010;
     }
+
     @media (max-width: 768px) {
       .container {
         min-width: 280px;
@@ -257,16 +272,18 @@ if ($amount !== null && $currency) {
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="failed-header">
       <img src="/assets/img/FailedIcon.svg" alt="Failed" />
       <h1>Payment Failed</h1>
       <?php if ($formattedAmount && $currency): ?>
-        <p class="amount">for <?php echo htmlspecialchars($currency); ?> <?php echo htmlspecialchars($formattedAmount); ?></p>
+        <p class="amount">for <?php echo htmlspecialchars($currency); ?>   <?php echo htmlspecialchars($formattedAmount); ?>
+        </p>
       <?php endif; ?>
     </div>
-    
+
     <div class="zigzag-box">
       <?php if ($transactionId || $paymentMode || $reason || $userName): ?>
         <div class="transaction-details">
@@ -299,9 +316,10 @@ if ($amount !== null && $currency) {
           </div>
         </div>
       <?php endif; ?>
-      
+
       <a href="/index.php" class="redirect-button" id="redirectButton">Go to Merchant Sample App</a>
-      <p class="redirect-timer" id="redirectTimer">Redirecting to merchant sample app in..<span id="counter">5</span></p>
+      <p class="redirect-timer" id="redirectTimer">Redirecting to merchant sample app in..<span id="counter">5</span>
+      </p>
     </div>
   </div>
 
@@ -310,7 +328,7 @@ if ($amount !== null && $currency) {
     const counterElement = document.getElementById('counter');
     const timerElement = document.getElementById('redirectTimer');
     const redirectButton = document.getElementById('redirectButton');
-    
+
     const timer = setInterval(() => {
       counter--;
       if (counterElement) {
@@ -321,7 +339,7 @@ if ($amount !== null && $currency) {
         window.location.href = '/index.php';
       }
     }, 1000);
-    
+
     if (redirectButton) {
       redirectButton.addEventListener('click', () => {
         clearInterval(timer);
@@ -330,4 +348,5 @@ if ($amount !== null && $currency) {
     }
   </script>
 </body>
+
 </html>

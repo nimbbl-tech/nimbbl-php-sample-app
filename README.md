@@ -13,8 +13,9 @@ cp config.php.example config.php
 php -S localhost:8000 -t public
 ```
 Open http://localhost:8000 in the browser.
+This sample app uses `.php` endpoints like `/payment-callback.php` so it works with the plain built-in server command above.
 
-**Note:** This sample app is **config.php-only** (no `.env` support). Do NOT commit `config.php`.
+**Note:** This sample app is **config.php-only**. Do NOT commit `config.php`.
 
 ### Flow
 1) Form POST hits `public/index.php` (server-side PHP).
@@ -24,6 +25,15 @@ Open http://localhost:8000 in the browser.
 
 ### Files
 - `public/index.php` – server-side order creation + Sonic Checkout launch (no extra API endpoints).
-- `bootstrap.php` – loads config and initializes `\Nimbbl\Api\Api`.
-- `public/webhook.php` – webhook handler endpoint for receiving payment events. Requires `X-Nimbbl-Signature` header for verification.
+- `bootstrap.php` – loads config and initializes `\Nimbbl\Api\RestClient\NimbblClient`.
+- `public/payment-callback.php` – payment callback handler for popup/redirect modes. Uses `PayloadHelperUtils::parseResponse()` and `verifyCallbackSignature()`.
+- `public/webhook.php` – webhook handler endpoint for receiving payment events. Uses `PayloadHelperUtils::parse()` and `verifySignature()`.
+- `public/payment-success.php` – success page that displays payment details.
+- `public/payment-failed.php` – failure page that displays payment error details.
+
+### Key Features
+- **Automatic Payload Parsing**: Uses `PayloadHelperUtils::parseResponse()` to automatically handle base64, JSON, encryption, and unwrapping
+- **Signature Verification**: Uses `verifyCallbackSignature()` for payment callbacks and `verifySignature()` for webhooks
+- **Transaction ID Extraction**: Extracts `transaction_id` only from the `transaction` object (no fallbacks)
+- **Status Priority**: Prioritizes `transaction.status` as the authoritative payment status
 

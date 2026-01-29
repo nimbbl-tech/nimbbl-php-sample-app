@@ -15,15 +15,26 @@ return [
     // Prod: https://api.nimbbl.tech/api/
     // UAT:  https://apipp.nimbbl.tech/api/
     // QA2:  https://qa2api.nimbbl.tech/api/
-    'api_url' => 'https://api.nimbbl.tech/api/',
-    'api_version' => 'v3',
+    'api_host' => 'https://api.nimbbl.tech',
 
-    // Logging (optional)
-    'enable_logging' => true,
-    // Use a real file path (SDK logger will create the directory if missing).
-    // Set enable_logging=false to route logs to /dev/null (see bootstrap.php).
+      // Use a real file path (SDK logger will create the directory if missing).
+    // To disable logging, set 'log_file' to '/dev/null'.
     'log_file' => __DIR__ . '/storage/nimbbl_debug.log',
     // Debug logging flag (currently unused in this sample app)
     'debug_logging' => false,
+
+    // Optional: Enable encryption for outgoing request payloads (ENCRYPT_PAYLOAD parity with .NET sample)
+    // Incoming webhook/callback decryption is auto-detected (no flag needed).
+    'encrypt_payload' => false,
+
+    // Optional: Override the host used when constructing callback URLs.
+    // Example: '192.168.1.10:8000'
+    // If null, the app auto-detects (and if running on localhost, it will try to use LAN IP).
+    'app_host' => null,
+
+    // Optional: Override checkout JS hosts (for QA/sandbox environments)
+    // The Sonic JS `apiHost` will be derived automatically from `api_url` (scheme://host).
+    // Set `checkout_host` only if you need to override the checkout UI host.
+    'checkout_host' => null,
 ];
 

@@ -8,6 +8,7 @@ logs/
 # Storage
 storage/webhook_seen.json
 storage/webhooks.log
+storage/*.log
 
 # Composer
 /vendor/

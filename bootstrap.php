@@ -5,7 +5,7 @@ error_reporting(E_ALL & ~E_DEPRECATED);
 
 // Prefer local vendor autoload; fallback to repo root vendor
 $localAutoload = __DIR__ . '/vendor/autoload.php';
-$rootAutoload  = __DIR__ . '/../vendor/autoload.php';
+$rootAutoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($localAutoload)) {
     require $localAutoload;
 } elseif (file_exists($rootAutoload)) {
@@ -43,20 +43,40 @@ if (!$accessKey || !$accessSecret) {
 // Logging
 // NOTE: The SDK Logger in nimbbl/nimbbl-sdk writes to a file path (it mkdir's dirname()).
 // So avoid stream targets like php://stderr; use a real file path (or /dev/null to disable).
-$enableLogging = (bool)($config['enable_logging'] ?? true);
+$debugLogging = (bool) ($config['debug_logging'] ?? false);
+$encryptPayload = (bool) ($config['encrypt_payload'] ?? false);
 $defaultLogFile = __DIR__ . '/storage/nimbbl_debug.log';
-$logFile = $enableLogging
-    ? ($config['log_file'] ?? $defaultLogFile)
-    : '/dev/null';
+$logFileBase = $config['log_file'] ?? $defaultLogFile;
+
+// Match .NET behavior (implemented in PHP SDK logger): logs/nimbbl_debug.log -> logs/nimbbl_debug_ddMMyyyy.log
+$logFile = \Nimbbl\Api\Log\Logger::resolveLogFilePath($logFileBase);
+
+// Apply .NET-like gating controls (now matching .NET "always-on" behavior for non-debug)
+if ($debugLogging) {
+    \Nimbbl\Api\Log\Logger::enableDebugLogging();
+} else {
+    \Nimbbl\Api\Log\Logger::disableDebugLogging();
+}
+
+// Initialize SDK logger instance with resolved log file path
+\Nimbbl\Api\Log\Logger::getInstance($logFile);
 
 // Core API client for S2S (token/order/enquiry)
-$api = new \Nimbbl\Api\Api(
-    $accessKey,
-    $accessSecret,
-    $config['api_url'] ?? null,
-    $config['api_version'] ?? null,
+// Construct full API URL from Host (parity with .NET NimbblApi.Initialize)
+$apiHost = $config['api_host'] ?? null;
+$apiUrl = ($apiHost === null)
+    ? \Nimbbl\Api\Common\ApiConstants::BASE_URL
+    : rtrim($apiHost, '/') . \Nimbbl\Api\Common\ApiConstants::API_PATH;
+
+// Initialize NimbblClient
+$api = new \Nimbbl\Api\RestClient\NimbblClient(
+    $config['access_key'],
+    $config['access_secret'],
+    $apiUrl,
     null,
-    $logFile
+    null,
+    $logFile,
+    $encryptPayload
 );
 
 // Checkout launcher helper
