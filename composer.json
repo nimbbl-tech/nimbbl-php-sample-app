@@ -3,8 +3,18 @@
   "type": "project",
   "require": {
     "php": ">=8.0",
-    "nimbbl/nimbbl-sdk": "^4.0.0"
+    "nimbbl/nimbbl-sdk": "*"
   },
   "minimum-stability": "dev",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../nimbbl-php-sdk",
+      "options": {
+        "symlink": true
+      }
+    }
+  ]
 }
+

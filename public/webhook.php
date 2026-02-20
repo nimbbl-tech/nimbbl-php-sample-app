@@ -39,6 +39,11 @@ try {
     $raw = file_get_contents('php://input');
     $accessSecret = $config['access_secret'] ?? '';
 
+    // Log webhook received
+    Logger::getInstance()->info("=== WEBHOOK RECEIVED ===");
+    Logger::getInstance()->info("Webhook payload length: " . strlen($raw));
+    Logger::getInstance()->info("Raw payload preview: " . substr($raw, 0, 200));
+
     // Validate required parameters before verification
     // REQUIRED: Webhook payload must not be empty
     if (empty($raw)) {
@@ -47,6 +52,7 @@ try {
 
     // Parse and unwrap the payload using PayloadHelperUtils (handles encryption, unwrapping, etc.)
     $parsed = PayloadHelperUtils::parse($raw, $accessSecret);
+    Logger::getInstance()->info("Webhook parsed successfully. Event type: " . ($parsed['event_type'] ?? 'unknown'));
 
     // Verify webhook signature
     $verifier = new SignatureVerifier();
@@ -56,8 +62,12 @@ try {
         throw new \Exception('Webhook signature verification failed: ' . ($result['message'] ?? 'Unknown error'));
     }
 
+    Logger::getInstance()->info("Webhook signature verified successfully");
+
     // Process the webhook event based on event type
     processWebhookEvent($parsed);
+
+    Logger::getInstance()->info("Webhook processing completed successfully");
 
     // Always return 200 OK (required within 15 seconds)
     http_response_code(200);
@@ -67,6 +77,8 @@ try {
         'event_type' => $parsed['event_type'] ?? 'unknown',
     ]);
 } catch (\Throwable $e) {
+    Logger::getInstance()->error("Webhook error: " . $e->getMessage());
+    Logger::getInstance()->error("Stack trace: " . $e->getTraceAsString());
     http_response_code(400);
     header('Content-Type: application/json');
     echo json_encode(['error' => $e->getMessage()]);

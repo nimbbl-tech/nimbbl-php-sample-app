@@ -34,7 +34,7 @@ class CheckoutClient
 
     $opts = $this->filterOptions($options);
     Logger::getInstance()->log("Options (filtered): " . json_encode($opts, JSON_PRETTY_PRINT), Logger::LOG_DEBUG, 'CheckoutClient');
-    // Use the same unified endpoint as the .NET sample app:
+    // Use the same unified endpoint:
     // - POST /payment-callback.php normalizes/decrypts callback payloads
     $handlerPostUrl = $opts['handler_post_url'] ?? '/payment-callback.php';
     $customHandlerJs = $opts['callback_handler_js'] ?? null;

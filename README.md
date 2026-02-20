@@ -8,7 +8,7 @@ PHP-only demo (sonicshop-like) that creates orders via S2S using `nimbbl-php-sdk
 composer install
 
 cp config.php.example config.php
-# Edit config.php and fill in access_key, access_secret (and optionally api_url/api_version)
+# Edit config.php and fill in access_key, access_secret (and optionally api_host)
 
 php -S localhost:8000 -t public
 ```

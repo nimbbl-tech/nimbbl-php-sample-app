@@ -102,7 +102,7 @@ if ($method === 'POST') {
       // SDK automatically encrypts payload if ENCRYPT_PAYLOAD flag is enabled
       // Encryption is handled in Orders.createOrder based on the flag passed during SDK initialization
 
-      // Amounts derived strictly from the entered amount (matching .NET sample app)
+      // Amounts derived strictly from the entered amount
       $totalAmount = (double) $amount;
 
       // Default user values when inputs are empty
@@ -110,15 +110,15 @@ if ($method === 'POST') {
       $userEmail = !empty($emailRaw) ? $emailRaw : 'customer@example.com';
       $userMobile = !empty($mobileRaw) ? $mobileRaw : '9876543210';
 
-      // Build Sonic JS apiHost from api_url (scheme://host[:port])
-      // Example api_url: https://qa4api.nimbbl.tech/api/  -> apiHost: https://qa4api.nimbbl.tech
-      function getSonicApiHostFromApiUrl(array $config): ?string
+      // Build Sonic JS apiHost from api_host (scheme://host[:port])
+      // Example api_host: https://qa4api.nimbbl.tech -> apiHost: https://qa4api.nimbbl.tech
+      function getSonicApiHostFromApiHost(array $config): ?string
       {
-        $apiUrl = $config['api_url'] ?? null;
-        if (!is_string($apiUrl) || trim($apiUrl) === '') {
+        $apiHost = $config['api_host'] ?? null;
+        if (!is_string($apiHost) || trim($apiHost) === '') {
           return null;
         }
-        $parts = parse_url($apiUrl);
+        $parts = parse_url($apiHost);
         if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
           return null;
         }
@@ -127,10 +127,10 @@ if ($method === 'POST') {
         return $parts['scheme'] . '://' . $host . $port;
       }
 
-      // Determine callback_url based on mode (matching .NET sample behavior)
+      // Determine callback_url based on mode
       $callbackUrl = '';
       if ($mode === 'redirect') {
-        // Match .NET: Request.Scheme + Request.Host.Value
+        // Get protocol and host
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $callbackUrl = $protocol . '://' . $host . '/payment-callback.php';
@@ -142,7 +142,7 @@ if ($method === 'POST') {
       // 2. Configure the webhook URL in Nimbbl Dashboard or contact support@nimbbl.tech
       // 3. Webhooks will be sent to your configured URL automatically
 
-      // Build order line items (matching .NET sample app structure)
+      // Build order line items
       $orderLineItemsArray = [
         [
           'title' => 'Paper Plane',
@@ -155,7 +155,7 @@ if ($method === 'POST') {
         ]
       ];
 
-      // Build order request (matching .NET sample app structure)
+      // Build order request
       $orderRequest = [
         'total_amount' => $totalAmount,
         'amount_before_tax' => $totalAmount,
@@ -1080,7 +1080,7 @@ $redirectCallback = isset($_GET['redirect_callback']) && $_GET['redirect_callbac
     // Determine if redirect or popup based on mode (matching React app behavior)
     // $mode already sanitized above
     if ($mode === 'redirect') {
-      // Match .NET: Request.Scheme + Request.Host.Value
+      // Get protocol and host from server variables
       $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
       $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
       $options['callback_url'] = $protocol . '://' . $host . '/payment-callback.php';
@@ -1088,7 +1088,7 @@ $redirectCallback = isset($_GET['redirect_callback']) && $_GET['redirect_callbac
       // Popup flow with custom handler: redirect to success/failed page after payment
       $options['callback_handler_js'] = 'async function(response) {
                 try {
-                    // Prevent multiple callback executions (parity with .NET sample)
+                    // Prevent multiple callback executions
                     if (window.__nimbbl_callback_handled) {
                         return;
                     }
@@ -1103,7 +1103,7 @@ $redirectCallback = isset($_GET['redirect_callback']) && $_GET['redirect_callbac
                         return;
                     }
 
-                    // Always POST to backend to normalize/decrypt (parity with .NET sample)
+                    // Always POST to backend to normalize/decrypt
                     let decodedResponse = response;
                     try {
                         const encryptedResponse =
@@ -1157,7 +1157,7 @@ $redirectCallback = isset($_GET['redirect_callback']) && $_GET['redirect_callbac
                     
                     // Extract payment details
                     const payload = decodedResponse.payload || decodedResponse;
-                    // Extract status (parity with .NET sample: check transaction/order status too)
+                    // Extract status (check transaction/order status too)
                     let status = payload.status || decodedResponse.status;
                     if (!status && payload.transaction && payload.transaction.status) {
                         status = payload.transaction.status;
@@ -1219,7 +1219,7 @@ $redirectCallback = isset($_GET['redirect_callback']) && $_GET['redirect_callbac
 
     // Optional host overrides for checkout JS (aligns with env-based config used in React demo)
     $checkoutEnv = array_filter([
-      'apiHost' => getSonicApiHostFromApiUrl($config),
+      'apiHost' => getSonicApiHostFromApiHost($config),
       'checkoutHost' => $config['checkout_host'] ?? null,
     ]);
 
