@@ -51,7 +51,7 @@ try {
     }
 
     // Parse and unwrap the payload using PayloadHelperUtils (handles encryption, unwrapping, etc.)
-    $parsed = PayloadHelperUtils::parse($raw, $accessSecret);
+    $parsed = PayloadHelperUtils::parseResponse($raw, $accessSecret);
     Logger::getInstance()->info("Webhook parsed successfully. Event type: " . ($parsed['event_type'] ?? 'unknown'));
 
     // Verify webhook signature
