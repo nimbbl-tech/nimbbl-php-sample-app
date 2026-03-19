@@ -52,7 +52,16 @@ try {
 
     // Parse and unwrap the payload using PayloadHelperUtils (handles encryption, unwrapping, etc.)
     $parsed = PayloadHelperUtils::parseResponse($raw, $accessSecret);
-    Logger::getInstance()->info("Webhook parsed successfully. Event type: " . ($parsed['event_type'] ?? 'unknown'));
+    $ctxSubMerchantId = $parsed['sub_merchant_id'] ?? null;
+    $ctxOrderId = $parsed[JsonKeys::NIMBBL_ORDER_ID] ?? $parsed[JsonKeys::ORDER_ID] ?? null;
+    $ctxTransactionId = $parsed[JsonKeys::TRANSACTION][JsonKeys::TRANSACTION_ID] ?? null;
+    Logger::getInstance()->info(
+        "Webhook parsed successfully. Event type: " . ($parsed['event_type'] ?? 'unknown'),
+        null,
+        $ctxSubMerchantId,
+        $ctxOrderId,
+        $ctxTransactionId
+    );
 
     // Verify webhook signature
     $verifier = new SignatureVerifier();
@@ -62,12 +71,12 @@ try {
         throw new \Exception('Webhook signature verification failed: ' . ($result['message'] ?? 'Unknown error'));
     }
 
-    Logger::getInstance()->info("Webhook signature verified successfully");
+    Logger::getInstance()->info("Webhook signature verified successfully", null, $ctxSubMerchantId, $ctxOrderId, $ctxTransactionId);
 
     // Process the webhook event based on event type
     processWebhookEvent($parsed);
 
-    Logger::getInstance()->info("Webhook processing completed successfully");
+    Logger::getInstance()->info("Webhook processing completed successfully", null, $ctxSubMerchantId, $ctxOrderId, $ctxTransactionId);
 
     // Always return 200 OK (required within 15 seconds)
     http_response_code(200);
@@ -77,8 +86,8 @@ try {
         'event_type' => $parsed['event_type'] ?? 'unknown',
     ]);
 } catch (\Throwable $e) {
-    Logger::getInstance()->error("Webhook error: " . $e->getMessage());
-    Logger::getInstance()->error("Stack trace: " . $e->getTraceAsString());
+    Logger::getInstance()->error("Webhook error: " . $e->getMessage(), null, $ctxSubMerchantId ?? null, $ctxOrderId ?? null, $ctxTransactionId ?? null);
+    Logger::getInstance()->error("Stack trace: " . $e->getTraceAsString(), null, $ctxSubMerchantId ?? null, $ctxOrderId ?? null, $ctxTransactionId ?? null);
     http_response_code(400);
     header('Content-Type: application/json');
     echo json_encode(['error' => $e->getMessage()]);
@@ -141,7 +150,8 @@ function processWebhookEvent($parsed)
  */
 function handlePaymentSuccess($orderId, $transactionId, $data)
 {
-    Logger::getInstance()->info("Payment successful - Order: {$orderId}, Transaction: {$transactionId}");
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
+    Logger::getInstance()->info("Payment successful - Order: {$orderId}, Transaction: {$transactionId}", null, $subMerchantId, $orderId, $transactionId);
 
     // TODO: Add your business logic here
     // Examples:
@@ -158,7 +168,8 @@ function handlePaymentSuccess($orderId, $transactionId, $data)
  */
 function handlePaymentFailed($orderId, $transactionId, $data)
 {
-    Logger::getInstance()->error("Payment failed - Order: {$orderId}, Transaction: {$transactionId}");
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
+    Logger::getInstance()->error("Payment failed - Order: {$orderId}, Transaction: {$transactionId}", null, $subMerchantId, $orderId, $transactionId);
 
     // Extract failure reason from transaction object
     $transaction = $data['transaction'] ?? [];
@@ -167,7 +178,7 @@ function handlePaymentFailed($orderId, $transactionId, $data)
         ?? $transaction['nimbbl_consumer_message']
         ?? $data['message']
         ?? 'Unknown';
-    Logger::getInstance()->error("Failure reason: {$failureReason}");
+    Logger::getInstance()->error("Failure reason: {$failureReason}", null, $subMerchantId, $orderId, $transactionId);
 
     // TODO: Add your business logic here
     // Examples:
@@ -182,7 +193,8 @@ function handlePaymentFailed($orderId, $transactionId, $data)
  */
 function handlePaymentReversing($orderId, $transactionId, $data)
 {
-    Logger::getInstance()->warning("Payment reversing - Order: {$orderId}, Transaction: {$transactionId}");
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
+    Logger::getInstance()->warning("Payment reversing - Order: {$orderId}, Transaction: {$transactionId}", null, $subMerchantId, $orderId, $transactionId);
     // TODO: Implement your business logic
 }
 
@@ -192,7 +204,8 @@ function handlePaymentReversing($orderId, $transactionId, $data)
  */
 function handlePaymentReversalFailed($orderId, $transactionId, $data)
 {
-    Logger::getInstance()->error("Payment reversal failed - Order: {$orderId}, Transaction: {$transactionId}");
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
+    Logger::getInstance()->error("Payment reversal failed - Order: {$orderId}, Transaction: {$transactionId}", null, $subMerchantId, $orderId, $transactionId);
     // TODO: Implement your business logic
 }
 
@@ -202,7 +215,8 @@ function handlePaymentReversalFailed($orderId, $transactionId, $data)
  */
 function handlePaymentReversed($orderId, $transactionId, $data)
 {
-    Logger::getInstance()->info("Payment reversed - Order: {$orderId}, Transaction: {$transactionId}");
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
+    Logger::getInstance()->info("Payment reversed - Order: {$orderId}, Transaction: {$transactionId}", null, $subMerchantId, $orderId, $transactionId);
     // TODO: Implement your business logic
 }
 
@@ -213,9 +227,10 @@ function handlePaymentReversed($orderId, $transactionId, $data)
 function handleRefundSuccess($orderId, $transactionId, $data)
 {
     $transaction = $data['transaction'] ?? [];
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
     $refundId = $data['nimbbl_refund_id'] ?? ($data['refund_transaction_id'] ?? ($transaction['transaction_id'] ?? ''));
     $refundAmount = $transaction['refund_amount'] ?? ($data['refund_amount'] ?? 0);
-    Logger::getInstance()->info("Refund successful - Order: {$orderId}, Refund: {$refundId}, Amount: {$refundAmount}");
+    Logger::getInstance()->info("Refund successful - Order: {$orderId}, Refund: {$refundId}, Amount: {$refundAmount}", null, $subMerchantId, $orderId, $transactionId);
     // TODO: Implement your business logic
 }
 
@@ -226,8 +241,9 @@ function handleRefundSuccess($orderId, $transactionId, $data)
 function handleRefundFailed($orderId, $transactionId, $data)
 {
     $transaction = $data['transaction'] ?? [];
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
     $txnId = $transactionId ?: ($data['refund_transaction_id'] ?? ($transaction['transaction_id'] ?? ''));
-    Logger::getInstance()->error("Refund failed - Order: {$orderId}, Transaction: {$txnId}");
+    Logger::getInstance()->error("Refund failed - Order: {$orderId}, Transaction: {$txnId}", null, $subMerchantId, $orderId, $txnId);
     // TODO: Implement your business logic
 }
 
@@ -238,8 +254,9 @@ function handleRefundFailed($orderId, $transactionId, $data)
 function handleRefundPending($orderId, $transactionId, $data)
 {
     $transaction = $data['transaction'] ?? [];
+    $subMerchantId = $data['sub_merchant_id'] ?? null;
     $txnId = $transactionId ?: ($data['refund_transaction_id'] ?? ($transaction['transaction_id'] ?? ''));
-    Logger::getInstance()->warning("Refund pending - Order: {$orderId}, Transaction: {$txnId}");
+    Logger::getInstance()->warning("Refund pending - Order: {$orderId}, Transaction: {$txnId}", null, $subMerchantId, $orderId, $txnId);
     // TODO: Implement your business logic
 }
 

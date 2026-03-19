@@ -28,12 +28,12 @@ class CheckoutClient
   public function renderInlineLauncher(string $orderToken, array $options = []): string
   {
     // Debug logging
-    Logger::getInstance()->log("=== CheckoutClient::renderInlineLauncher DEBUG ===", Logger::LOG_INFO, 'CheckoutClient');
-    Logger::getInstance()->log("Order Token: " . $orderToken, Logger::LOG_INFO, 'CheckoutClient');
-    Logger::getInstance()->log("Options (raw): " . json_encode($options, JSON_PRETTY_PRINT), Logger::LOG_DEBUG, 'CheckoutClient');
+    Logger::getInstance()->info("=== CheckoutClient::renderInlineLauncher DEBUG ===");
+    Logger::getInstance()->info("Order Token: " . $this->maskTokenForLog($orderToken));
+    Logger::getInstance()->debug("Options (raw): " . $this->safeJsonForLog($options));
 
     $opts = $this->filterOptions($options);
-    Logger::getInstance()->log("Options (filtered): " . json_encode($opts, JSON_PRETTY_PRINT), Logger::LOG_DEBUG, 'CheckoutClient');
+    Logger::getInstance()->debug("Options (filtered): " . $this->safeJsonForLog($opts));
     // Use the same unified endpoint:
     // - POST /payment-callback.php normalizes/decrypts callback payloads
     $handlerPostUrl = $opts['handler_post_url'] ?? '/payment-callback.php';
@@ -66,10 +66,10 @@ JS;
     ]);
     $checkoutConfigJson = json_encode($checkoutConfig, JSON_UNESCAPED_SLASHES);
 
-    Logger::getInstance()->log("Handler Post URL: " . $handlerPostUrl, Logger::LOG_INFO, 'CheckoutClient');
-    Logger::getInstance()->log("Checkout Config (JSON): " . $checkoutConfigJson, Logger::LOG_DEBUG, 'CheckoutClient');
-    Logger::getInstance()->log("Options (JSON): " . $jsonOptions, Logger::LOG_DEBUG, 'CheckoutClient');
-    Logger::getInstance()->log("=== END DEBUG ===", Logger::LOG_INFO, 'CheckoutClient');
+    Logger::getInstance()->info("Handler Post URL: " . $handlerPostUrl);
+    Logger::getInstance()->debug("Checkout Config (JSON): " . $this->safeJsonStringForLog($checkoutConfigJson));
+    Logger::getInstance()->debug("Options (JSON): " . $this->safeJsonStringForLog($jsonOptions));
+    Logger::getInstance()->info("=== END DEBUG ===");
 
     return <<<HTML
 <script type="module">
@@ -106,6 +106,32 @@ HTML;
       'emi_code',
     ];
     return array_intersect_key($options, array_flip($allowed));
+  }
+
+  private function maskTokenForLog(string $token): string
+  {
+    if ($token === '') {
+      return $token;
+    }
+    if (strlen($token) <= 16) {
+      return str_repeat('*', strlen($token));
+    }
+    return substr($token, 0, 8) . str_repeat('*', max(4, strlen($token) - 16)) . substr($token, -8);
+  }
+
+  private function safeJsonForLog(array $payload): string
+  {
+    $encoded = json_encode($payload, JSON_PRETTY_PRINT);
+    return $this->safeJsonStringForLog($encoded !== false ? $encoded : '{}');
+  }
+
+  private function safeJsonStringForLog(string $json): string
+  {
+    // Avoid logging large callback JS and token-like values in sample app debug logs.
+    if (strlen($json) > 2000) {
+      return substr($json, 0, 2000) . '... [truncated]';
+    }
+    return $json;
   }
 }
 

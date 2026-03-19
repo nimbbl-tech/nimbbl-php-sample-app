@@ -147,6 +147,10 @@ if ($method === 'POST') {
             'parsed' => $parsed,
         ];
 
+        $ctxSubMerchantId = $parsed['sub_merchant_id'] ?? null;
+        $ctxOrderId = $parsed[JsonKeys::NIMBBL_ORDER_ID] ?? $parsed[JsonKeys::ORDER_ID] ?? null;
+        $ctxTransactionId = $parsed[JsonKeys::TRANSACTION][JsonKeys::TRANSACTION_ID] ?? ($parsed[JsonKeys::TRANSACTION_ID] ?? null);
+
         // Event type (optional; useful to avoid double redirects on close events client-side)
         $eventType = $parsed[JsonKeys::EVENT_TYPE] ?? null;
         $result['event_type'] = $eventType;
@@ -160,7 +164,13 @@ if ($method === 'POST') {
         $result['signature_message'] = $signatureValid ? 'Signature valid' : 'Signature invalid';
 
         // Log signature verification result
-        Logger::getInstance()->info("PaymentCallback(POST) signature verification: " . ($signatureValid ? "valid" : "invalid") . " [event_type=" . ($eventType ?? 'N/A') . "]");
+        Logger::getInstance()->info(
+            "PaymentCallback(POST) signature verification: " . ($signatureValid ? "valid" : "invalid") . " [event_type=" . ($eventType ?? 'N/A') . "]",
+            null,
+            $ctxSubMerchantId,
+            $ctxOrderId,
+            $ctxTransactionId
+        );
 
         echo json_encode($result);
         exit;
