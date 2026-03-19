@@ -1,6 +1,3 @@
-# Environment variables
-.env
-
 # Configuration (contains sensitive credentials)
 config.php
 
@@ -11,6 +8,7 @@ logs/
 # Storage
 storage/webhook_seen.json
 storage/webhooks.log
+storage/*.log
 
 # Composer
 /vendor/

@@ -4,30 +4,42 @@
  *
  * Copy this file to config.php and update with your credentials
  * DO NOT commit config.php to version control
- *
- * For production, use environment variables for required credentials:
- * - NIMBBL_ACCESS_KEY (required)
- * - NIMBBL_ACCESS_SECRET (required)
- *
- * Optional values can be edited directly in this file.
  */
 
 return [
-    // API credentials - use environment vars in production
-    'access_key' => getenv('NIMBBL_ACCESS_KEY') ?: 'YOUR_NIMBBL_ACCESS_KEY',
-    'access_secret' => getenv('NIMBBL_ACCESS_SECRET') ?: 'YOUR_NIMBBL_ACCESS_SECRET',
+    // API credentials
+    'access_key' => 'YOUR_NIMBBL_ACCESS_KEY',
+    'access_secret' => 'YOUR_NIMBBL_ACCESS_SECRET',
 
-    // Base URL + version
-    // Prod: https://api.nimbbl.tech/api/
-    // UAT:  https://apipp.nimbbl.tech/api/
-    // QA2:  https://qa2api.nimbbl.tech/api/
-    'api_url' => getenv('NIMBBL_API_URL') ?: 'https://api.nimbbl.tech/api/',
-    'api_version' => 'v3',
+    // API host (SDK appends /api/v3 internally in bootstrap)
+    // Prod: https://api.nimbbl.tech
+    // UAT:  https://apipp.nimbbl.tech
+    // QA2:  https://qa2api.nimbbl.tech
+    'api_host' => 'https://api.nimbbl.tech',
 
-    // Logging (optional)
-    'enable_logging' => true,
-    'log_file' => getenv('NIMBBL_LOG_FILE') ?: 'php://stderr',
-    // Debug logging flag (controls Logger::enableDebugLogging/disableDebugLogging)
+      // Use a real file path (SDK logger will create the directory if missing).
+    // To disable logging, set 'log_file' to '/dev/null'.
+    'log_file' => __DIR__ . '/storage/nimbbl_debug.log',
+    // Debug logging flag (currently unused in this sample app)
     'debug_logging' => false,
+
+    // Optional: Enable encryption for outgoing request payloads (ENCRYPT_PAYLOAD flag)
+    // Incoming webhook/callback decryption is auto-detected (no flag needed).
+    'encrypt_payload' => false,
+
+    // Optional: Override log file naming behavior (default false)
+    // When true, use static filename without date suffix: nimbbl_debug.log
+    // When false, append date suffix automatically: nimbbl_debug_ddMMyyyy.log
+    'override_log_filename' => false,
+
+    // Optional: Override the host used when constructing callback URLs.
+    // Example: '192.168.1.10:8000'
+    // If null, the app auto-detects (and if running on localhost, it will try to use LAN IP).
+    'app_host' => null,
+
+    // Optional: Override checkout JS hosts (for QA/sandbox environments)
+    // The Sonic JS `apiHost` will be derived automatically from `api_host` (scheme://host).
+    // Set `checkout_host` only if you need to override the checkout UI host.
+    'checkout_host' => null,
 ];
 

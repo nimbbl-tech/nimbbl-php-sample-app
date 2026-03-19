@@ -1,0 +1,10 @@
+{
+  "name": "nimbbl/merchant-sample-app",
+  "type": "project",
+  "require": {
+    "php": ">=8.0",
+    "nimbbl/nimbbl-sdk": "^4.0.0"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
